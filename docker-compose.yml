@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: music_streaming_postgres
+    environment:
+      POSTGRES_DB: music_streaming_platform
+      POSTGRES_USER: music_app_user
+      POSTGRES_PASSWORD: music_secure_password
+      POSTGRES_HOST_AUTH_METHOD: md5
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgresql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./sample-data/postgresql_sample_data.sql:/docker-entrypoint-initdb.d/02-sample-data.sql
+    networks:
+      - music_streaming_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U music_app_user -d music_streaming_platform"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  mongodb:
+    image: mongo:6.0
+    container_name: music_streaming_mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin_secure_password
+      MONGO_INITDB_DATABASE: music_streaming_platform
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - music_streaming_network
+    restart: unless-stopped
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Optional: MongoDB Express for web-based MongoDB administration
+  mongo-express:
+    image: mongo-express:latest
+    container_name: music_streaming_mongo_express
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: admin_secure_password
+      ME_CONFIG_MONGODB_URL: mongodb://admin:admin_secure_password@mongodb:27017/
+    ports:
+      - "8081:8081"
+    networks:
+      - music_streaming_network
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+  # Optional: pgAdmin for PostgreSQL administration
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: music_streaming_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@musicstreaming.com
+      PGADMIN_DEFAULT_PASSWORD: pgadmin_secure_password
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "8080:80"
+    networks:
+      - music_streaming_network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  mongodb_data:
+    driver: local
+
+networks:
+  music_streaming_network:
+    driver: bridge

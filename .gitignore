@@ -1,0 +1,57 @@
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Database backups
+*.sql.gz
+*.sql.bak
+backup_*
+
+# Docker volumes
+docker-volumes/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Application specific
+node_modules/
+dist/
+build/
+
+# Database connection files (if any)
+.pgpass
+.mongorc.js
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+*.csr
+
+# Compressed files
+*.zip
+*.tar.gz
+*.rar
